@@ -1,5 +1,5 @@
 // TODO# 1: Define Module and Marketplace Address
-address 0xa9c2def31081a7eb7413fc4ec419bf1e92a0a40b7f24cc3c4750b4d67be8d7ca {
+address 0x5f227096d4d9425b07feef4e86da8d84a1d0d9b5a39b41cb902f3d2cb4fcbb5a {
 
     module NFTMarketplace {
         use 0x1::signer;
@@ -225,6 +225,19 @@ address 0xa9c2def31081a7eb7413fc4ec419bf1e92a0a40b7f24cc3c4750b4d67be8d7ca {
             };
 
             nft_ids
+        }
+        // TODO# 21: Transfer NFT to Another User
+        public entry fun transfer_nft(account: &signer, marketplace_addr: address, nft_id: u64, recipient: address) acquires Marketplace {
+            let marketplace = borrow_global_mut<Marketplace>(marketplace_addr);
+            let nft_ref = vector::borrow_mut(&mut marketplace.nfts, nft_id);
+
+            assert!(nft_ref.owner == signer::address_of(account), 500); // Caller is not the owner
+            assert!(nft_ref.owner != recipient, 501); // Prevent transfer to the same owner
+
+            // Transfer ownership
+            nft_ref.owner = recipient;
+            nft_ref.for_sale = false;
+            nft_ref.price = 0;
         }
     }
 }
