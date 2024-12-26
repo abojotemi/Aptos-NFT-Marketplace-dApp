@@ -372,5 +372,22 @@ address NFTMarketplace {
             
             auctioned_nfts
         }
+
+        // Get Auction Details
+        #[view]
+        public fun get_auction_details(marketplace_addr: address, nft_id: u64): (u64, address, u64) acquires AuctionData {
+            let auction_data = borrow_global<AuctionData>(marketplace_addr);
+            let items_len = vector::length(&auction_data.items);
+            let i = 0;
+            while (i < items_len) {
+                let item = vector::borrow(&auction_data.items, i);
+                if (item.nft_id == nft_id) {
+                    return (item.highest_bid, item.highest_bidder, item.started_at + item.duration);
+                };
+                i = i + 1;
+            };
+            // If no auction found, return default values
+            (0, @0x0, 0)
+        }
     }
 }

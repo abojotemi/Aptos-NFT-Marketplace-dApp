@@ -256,14 +256,16 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
       };
 
       const response = await (window as any).aptos.signAndSubmitTransaction(
-        {payload: entryFunctionPayload}
+        { payload: entryFunctionPayload }
       );
       await client.waitForTransaction(response.hash);
 
       message.success("Bid placed successfully!");
       setIsBidModalVisible(false);
       setBidAmount("");
-      handleFetchNfts(rarity === "all" ? undefined : rarity);
+
+      // Refresh the auctioned NFTs
+      handleFetchAuctionedNfts();
     } catch (error) {
       console.error("Error placing bid:", error);
       message.error("Failed to place bid.");
