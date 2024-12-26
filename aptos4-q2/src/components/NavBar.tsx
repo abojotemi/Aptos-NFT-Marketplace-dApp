@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Typography, Menu, Space, Button, Dropdown, message } from "antd";
+import {
+  Layout,
+  Typography,
+  Menu,
+  Space,
+  Button,
+  Dropdown,
+  message,
+} from "antd";
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { AptosClient } from "aptos";
-import { AccountBookOutlined, DownOutlined, LogoutOutlined } from "@ant-design/icons";
+import {
+  AccountBookOutlined,
+  DownOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import { Link } from "react-router-dom";
 
 const { Header } = Layout;
 const { Text } = Typography;
 
-const client = new AptosClient("https://fullnode.devnet.aptoslabs.com/v1");
+const client = new AptosClient("https://fullnode.testnet.aptoslabs.com/v1");
 
 interface NavBarProps {
   onMintNFTClick: () => void;
@@ -24,7 +36,9 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
     const fetchBalance = async () => {
       if (account) {
         try {
-          const resources: any[] = await client.getAccountResources(account.address);
+          const resources: any[] = await client.getAccountResources(
+            account.address
+          );
           const accountResource = resources.find(
             (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
           );
@@ -67,20 +81,38 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
-        <img src="/Aptos_Primary_WHT.png" alt="Aptos Logo" style={{ height: "30px", marginRight: 16 }} />
-        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={["marketplace"]} style={{ backgroundColor: "#001529" }}>
+        <img
+          src="/Aptos_Primary_WHT.png"
+          alt="Aptos Logo"
+          style={{ height: "30px", marginRight: 16 }}
+        />
+        <Menu
+          theme="dark"
+          mode="horizontal"
+          defaultSelectedKeys={["marketplace"]}
+          style={{ backgroundColor: "#001529" }}
+        >
           <Menu.Item key="marketplace">
-            <Link to="/" style={{ color: "#fff" }}>Marketplace</Link>
+            <Link to="/" style={{ color: "#fff" }}>
+              Marketplace
+            </Link>
           </Menu.Item>
           <Menu.Item key="my-collection">
-            <Link to="/my-nfts" style={{ color: "#fff" }}>My Collection</Link>
+            <Link to="/my-nfts" style={{ color: "#fff" }}>
+              My Collection
+            </Link>
           </Menu.Item>
           <Menu.Item key="mint-nft" onClick={onMintNFTClick}>
             <span style={{ color: "#fff" }}>Mint NFT</span>
           </Menu.Item>
+          <Menu.Item key="transfer-nft">
+            <Link to="/transfer-nft" style={{ color: "#fff" }}>
+              Transfer NFT
+            </Link>
+          </Menu.Item>
         </Menu>
       </div>
-  
+
       <Space style={{ alignItems: "center" }}>
         {connected && account ? (
           <Dropdown
@@ -91,18 +123,24 @@ const NavBar: React.FC<NavBarProps> = ({ onMintNFTClick }) => {
                   <Text copyable>{account.address}</Text>
                 </Menu.Item>
                 <Menu.Item key="network">
-                  <Text strong>Network:</Text> {network ? network.name : "Unknown"}
+                  <Text strong>Network:</Text>{" "}
+                  {network ? network.name : "Unknown"}
                 </Menu.Item>
                 <Menu.Item key="balance">
-                  <Text strong>Balance:</Text> {balance !== null ? `${balance} APT` : "Loading..."}
+                  <Text strong>Balance:</Text>{" "}
+                  {balance !== null ? `${balance} APT` : "Loading..."}
                 </Menu.Item>
                 <Menu.Divider />
-                <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
+                <Menu.Item
+                  key="logout"
+                  icon={<LogoutOutlined />}
+                  onClick={handleLogout}
+                >
                   Log Out
                 </Menu.Item>
               </Menu>
             }
-            trigger={['click']}
+            trigger={["click"]}
           >
             <Button type="primary">
               Connected <DownOutlined />
