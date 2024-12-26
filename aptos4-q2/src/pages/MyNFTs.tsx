@@ -176,7 +176,7 @@ const MyNFTs: React.FC = () => {
 
   useEffect(() => {
     fetchUserNFTs();
-  }, [fetchUserNFTs, currentPage]);
+  }, [fetchUserNFTs, currentPage, account]);
 
   const paginatedNFTs = nfts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 

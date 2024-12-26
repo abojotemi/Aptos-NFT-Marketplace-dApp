@@ -67,7 +67,14 @@ address NFTMarketplace {
 
         // TODO# 8: Mint New NFT
         public entry fun mint_nft(account: &signer, name: vector<u8>, description: vector<u8>, uri: vector<u8>, rarity: u8) acquires Marketplace {
-            let marketplace = borrow_global_mut<Marketplace>(signer::address_of(account));
+            let marketplace_addr = signer::address_of(account);
+            if (!exists<Marketplace>(marketplace_addr)) {
+                let marketplace = Marketplace {
+                    nfts: vector::empty<NFT>()
+                };
+                move_to(account, marketplace);
+            };
+            let marketplace = borrow_global_mut<Marketplace>(marketplace_addr);
             let nft_id = vector::length(&marketplace.nfts);
 
             let new_nft = NFT {
@@ -83,7 +90,7 @@ address NFTMarketplace {
 
             vector::push_back(&mut marketplace.nfts, new_nft);
         }
-
+        
         // TODO# 9: View NFT Details
         #[view]
         public fun get_nft_details(marketplace_addr: address, nft_id: u64): (u64, address, vector<u8>, vector<u8>, vector<u8>, u64, bool, u8) acquires Marketplace {
