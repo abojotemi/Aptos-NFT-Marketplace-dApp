@@ -38,11 +38,12 @@ public entry fun transfer_nft(account: &signer, marketplace_addr: address, nft_i
 ### Overview
 The auction system allows users to auction their NFTs. Users can initialize an auction, place bids, and claim the NFT or the highest bid amount after the auction ends.
 
-### Features
 - **Auction Initialization**: Allows the owner to start an auction for their NFT with a specified duration.
 - **Bidding**: Users can place bids on the auctioned NFT. The highest bid is tracked.
 - **Claiming**: The highest bidder can claim the NFT, and the owner can claim the highest bid amount after the auction ends.
 - **Fee Deduction**: A marketplace fee is deducted from the highest bid amount before transferring the remaining amount to the owner.
+- **Clear All Auctions**: Allows the marketplace owner to clear all ongoing auctions.
+- **Cancel Auction**: Allows the owner of the NFT to cancel an ongoing auction before it ends.
 
 ### How It Works
 1. **Initialize Auction**: The owner starts an auction by specifying the NFT ID and duration. The NFT must not be listed for sale.
@@ -150,6 +151,36 @@ public entry fun claim_auction_coin(account: &signer, marketplace_addr: address,
 
     coin::transfer<aptos_coin::AptosCoin>(account, marketplace_addr, seller_revenue);
     coin::transfer<aptos_coin::AptosCoin>(account, signer::address_of(account), fee);
+
+    auction_item_ref.claimed = true;
+}
+```
+
+#### Clear All Auctions
+```move
+public entry fun clear_all_auctions(account: &signer, marketplace_addr: address) acquires AuctionData {
+    let auction_data = borrow_global_mut<AuctionData>(marketplace_addr);
+
+    assert!(signer::address_of(account) == marketplace_addr, 1000); // Caller is not the marketplace owner
+
+    let items_len = vector::length(&auction_data.items);
+    let i = 0;
+    while (i < items_len) {
+        let item = vector::borrow_mut(&mut auction_data.items, i);
+        item.claimed = true;
+        i = i + 1;
+    };
+}
+```
+
+#### Cancel Auction
+```move
+public entry fun cancel_auction(account: &signer, marketplace_addr: address, nft_id: u64) acquires AuctionData {
+    let auction_data = borrow_global_mut<AuctionData>(marketplace_addr);
+    let auction_item_ref = vector::borrow_mut(&mut auction_data.items, nft_id);
+
+    assert!(auction_item_ref.owner == signer::address_of(account), 1100); // Caller is not the owner
+    assert!(auction_item_ref.claimed == false, 1101); // Auction already claimed
 
     auction_item_ref.claimed = true;
 }
