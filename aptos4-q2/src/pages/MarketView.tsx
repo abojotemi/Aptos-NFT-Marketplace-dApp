@@ -287,10 +287,58 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
       await client.waitForTransaction(response.hash);
 
       message.success("NFT claimed successfully!");
-      handleFetchNfts(rarity === "all" ? undefined : rarity);
-    } catch (error) {
+      handleFetchAuctionedNfts(); // Refresh the auction list
+    } catch (error: any) {
       console.error("Error claiming NFT:", error);
-      message.error("Failed to claim NFT.");
+      if (error.toString().includes("0x321")) {
+        message.error("This NFT has already been claimed.");
+      } else {
+        message.error("Failed to claim NFT.");
+      }
+    }
+  };
+
+  // Add function to clear all auctioned NFTs
+  const handleClearAuctionedNfts = async () => {
+    try {
+      const entryFunctionPayload = {
+        type: "entry_function_payload",
+        function: `${marketplaceAddr}::NFTMarketplace::clear_auctioned_nfts`,
+        type_arguments: [],
+        arguments: [marketplaceAddr],
+      };
+
+      const response = await (window as any).aptos.signAndSubmitTransaction(
+        { payload: entryFunctionPayload }
+      );
+      await client.waitForTransaction(response.hash);
+
+      message.success("All auctioned NFTs cleared successfully!");
+      handleFetchAuctionedNfts(); // Refresh the auction list
+    } catch (error) {
+      console.error("Error clearing auctioned NFTs:", error);
+      message.error("Failed to clear auctioned NFTs.");
+    }
+  };
+
+  // Add function to cancel a particular auction
+  const handleCancelAuction = async (nftId: number) => {
+    try {
+      const entryFunctionPayload = {
+        type: "entry_function_payload",
+        function: `${marketplaceAddr}::NFTMarketplace::cancel_auction`,
+        type_arguments: [],
+        arguments: [marketplaceAddr, nftId.toString()],
+      };
+
+      const response = await (window as any).aptos.signAndSubmitTransaction(entryFunctionPayload);
+      await client.waitForTransaction(response.hash);
+
+      message.success("Auction canceled successfully!");
+      handleFetchAuctionedNfts(); // Refresh the auction list
+    } catch (error) {
+      console.error("Error canceling auction:", error);
+      message.error("Failed to cancel auction.");
     }
   };
 
@@ -345,6 +393,17 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
         </div>
       )}
 
+      {/* Clear Auctioned NFTs Button */}
+      {viewMode === 'auctions' && (
+        <Button
+          type="primary"
+          onClick={handleClearAuctionedNfts}
+          style={{ marginBottom: 20 }}
+        >
+          Clear All Auctioned NFTs
+        </Button>
+      )}
+
       {/* Card Grid */}
       <Row
         gutter={[24, 24]}
@@ -393,7 +452,10 @@ const MarketView: React.FC<MarketViewProps> = ({ marketplaceAddr }) => {
                   <Button type="link" onClick={() => handleClaimAuction(nft.id)}>
                     Claim
                   </Button>
-                )
+                ),
+                <Button type="link" onClick={() => handleCancelAuction(nft.id)}>
+                  Cancel Auction
+                </Button>
               ]}
             >
               {/* Rarity Tag */}

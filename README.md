@@ -50,6 +50,9 @@ The auction system allows users to auction their NFTs. Users can initialize an a
 3. **Claim NFT**: The highest bidder claims the NFT after the auction ends.
 4. **Claim Bid Amount**: The owner claims the highest bid amount after the auction ends, minus the marketplace fee.
 
+#### Note
+Trying to claim the NFT before the auction is over will lead to an error
+
 ### Example Usage
 #### Initialize Auction
 ```move

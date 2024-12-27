@@ -314,12 +314,24 @@ address NFTMarketplace {
         // Bid on Auction
         public entry fun bid(account: &signer, marketplace_addr: address, nft_id: u64, bid: u64) acquires AuctionData {
             let auction_data = borrow_global_mut<AuctionData>(marketplace_addr);
-            let auction_item_ref = vector::borrow_mut(&mut auction_data.items, nft_id);
+            let items_len = vector::length(&auction_data.items);
+            let i = 0;
+            let found = false;
 
-            assert!(bid > auction_item_ref.highest_bid, 700); // Bid is not higher than the current highest bid
+            while (i < items_len) {
+                let auction_item_ref = vector::borrow_mut(&mut auction_data.items, i);
+                if (auction_item_ref.nft_id == nft_id) {
+                    assert!(bid > auction_item_ref.highest_bid, 700); // Bid is not higher than the current highest bid
 
-            auction_item_ref.highest_bid = bid;
-            auction_item_ref.highest_bidder = signer::address_of(account);
+                    auction_item_ref.highest_bid = bid;
+                    auction_item_ref.highest_bidder = signer::address_of(account);
+                    found = true;
+                    break;
+                };
+                i = i + 1;
+            };
+
+            assert!(found, 701); // Auction not found for the given NFT ID
         }
 
         // Claim Auction Token
@@ -396,5 +408,37 @@ address NFTMarketplace {
             // If no auction found, return default values
             (0, @0x0, 0)
         }
+
+        // Clear all auctioned NFTs
+        public entry fun clear_auctioned_nfts(account: &signer, marketplace_addr: address) acquires AuctionData {
+            let auction_data = borrow_global_mut<AuctionData>(marketplace_addr);
+            let items_len = vector::length(&auction_data.items);
+            let i = 0;
+            while (i < items_len) {
+                let item_ref = vector::borrow_mut(&mut auction_data.items, i);
+                item_ref.claimed = true;
+                i = i + 1;
+            };
+        }
+
+        // Cancel a particular auction for an NFT
+        public entry fun cancel_auction(account: &signer, marketplace_addr: address, nft_id: u64) acquires AuctionData {
+            let auction_data = borrow_global_mut<AuctionData>(marketplace_addr);
+            let items_len = vector::length(&auction_data.items);
+            let i = 0;
+            let found = false;
+            while (i < items_len) {
+                let item_ref = vector::borrow_mut(&mut auction_data.items, i);
+                if (item_ref.nft_id == nft_id) {
+                    assert!(item_ref.owner == signer::address_of(account), 100); // Caller is not the owner
+                    item_ref.claimed = true;
+                    found = true;
+                    break;
+                };
+                i = i + 1;
+            };
+            assert!(found, 101); // Auction not found
+        }
+
     }
 }

@@ -35,27 +35,27 @@ const MyNFTs: React.FC = () => {
 
   const fetchUserNFTs = useCallback(async () => {
     if (!account) return;
-
+  
     try {
       console.log("Fetching NFT IDs for owner:", account.address);
-
+  
       const nftIdsResponse = await client.view({
         function: `${marketplaceAddr}::NFTMarketplace::get_all_nfts_for_owner`,
         arguments: [marketplaceAddr, account.address, "100", "0"],
         type_arguments: [],
       });
-
+  
       const nftIds = Array.isArray(nftIdsResponse[0]) ? nftIdsResponse[0] : nftIdsResponse;
       setTotalNFTs(nftIds.length);
-
+  
       if (nftIds.length === 0) {
         console.log("No NFTs found for the owner.");
         setNfts([]);
         return;
       }
-
+  
       console.log("Fetching details for each NFT ID:", nftIds);
-
+  
       const userNFTs = (await Promise.all(
         nftIds.map(async (id) => {
           try {
@@ -64,7 +64,7 @@ const MyNFTs: React.FC = () => {
               arguments: [marketplaceAddr, id],
               type_arguments: [],
             });
-
+  
             const [nftId, owner, name, description, uri, price, forSale, rarity] = nftDetails as [
               number,
               string,
@@ -75,7 +75,7 @@ const MyNFTs: React.FC = () => {
               boolean,
               number
             ];
-
+  
             const hexToUint8Array = (hexString: string): Uint8Array => {
               const bytes = new Uint8Array(hexString.length / 2);
               for (let i = 0; i < hexString.length; i += 2) {
@@ -83,7 +83,7 @@ const MyNFTs: React.FC = () => {
               }
               return bytes;
             };
-
+  
             return {
               id: nftId,
               name: new TextDecoder().decode(hexToUint8Array(name.slice(2))),
@@ -99,7 +99,7 @@ const MyNFTs: React.FC = () => {
           }
         })
       )).filter((nft): nft is NFT => nft !== null);
-
+  
       console.log("User NFTs:", userNFTs);
       setNfts(userNFTs);
     } catch (error) {
@@ -171,6 +171,40 @@ const MyNFTs: React.FC = () => {
     } catch (error) {
       console.error("Error starting auction:", error);
       message.error("Failed to start auction.");
+    }
+  };
+
+  const handleMintNFT = async (values: {
+    name: string;
+    description: string;
+    uri: string;
+    rarity: number;
+  }) => {
+    try {
+      const nameVector = Array.from(new TextEncoder().encode(values.name));
+      const descriptionVector = Array.from(
+        new TextEncoder().encode(values.description)
+      );
+      const uriVector = Array.from(new TextEncoder().encode(values.uri));
+  
+      const entryFunctionPayload = {
+        type: "entry_function_payload",
+        function: `${marketplaceAddr}::NFTMarketplace::mint_nft`,
+        type_arguments: [],
+        arguments: [nameVector, descriptionVector, uriVector, values.rarity],
+      };
+  
+      const txnResponse = await (window as any).aptos.signAndSubmitTransaction(
+        entryFunctionPayload
+      );
+      await client.waitForTransaction(txnResponse.hash);
+  
+      message.success("NFT minted successfully!");
+      setIsModalVisible(false);
+      fetchUserNFTs(); // Update the user's collection
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      message.error("Failed to mint NFT.");
     }
   };
 
